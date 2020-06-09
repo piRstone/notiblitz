@@ -10,21 +10,35 @@ import requests
 from datetime import datetime, timedelta
 from shapely.geometry import shape, Point
 
-from config import REGION, USER_TOKEN, APP_TOKEN, NOTIFICATION_DELTA
+from config import REGION, USER_TOKEN, APP_TOKEN, NOTIFICATION_DELTA, MAPBOX_TOKEN
 
 AreaBlitz = {"west": -1.58, "east": -1.03, "north": 47.17, "south": 46.84}
 
-zone = shape({ 'type': 'Polygon', 'coordinates': [REGION] })
+area = shape({ 'type': 'Polygon', 'coordinates': [REGION] })
 last_strike = None
+
+def get_city_name(lon, lat):
+    mapbox_api_url = 'https://api.mapbox.com/geocoding/v5/mapbox.places'
+    url = '{}/{},{}.json?types=place&access_token={}'.format(mapbox_api_url, lon, lat, MAPBOX_TOKEN)
+
+    response = requests.get(url)
+    data = response.json()
+    return data['features'][0]['text']
+
 
 def on_message(ws, message):
     global last_strike
     data = json.loads(message)
-    print(str(data['lat'])+","+str(data['lon']))
+    lon = data['lon']
+    lat = data['lat']
 
-    point = Point(data['lon'], data['lat'])
+    print(str(lon)+","+str(lat))
 
-    if zone.contains(point):
+    # Strike geopoint
+    point = Point(lon, lat)
+
+    # Check if strike is inside watched area
+    if area.contains(point):
         print('======== STRIKE ========')
 
         if last_strike:
@@ -36,13 +50,21 @@ def on_message(ws, message):
 
         if can_notify:
             last_strike = datetime.now()
+
+            # Display city name if Mapbox access token is set
+            message = 'La foudre a frappé dans votre secteur'
+            if MAPBOX_TOKEN:
+                city = get_city_name(lon, lat)
+                message = 'La foudre a frappé à {}.'.format(city)
+
+            # Prepare and send Pushover notification
             params = {
                 'user': USER_TOKEN,
                 'token': APP_TOKEN,
                 'title': 'Notiblitz',
-                'message': 'La foudre a frappé dans votre secteur'
+                'message': message
             }
-            r = requests.post('https://api.pushover.net/1/messages.json', data=params)
+            requests.post('https://api.pushover.net/1/messages.json', data=params)
 
 
 def on_error(ws, error):

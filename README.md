@@ -2,34 +2,28 @@
 
 Thunderbolt detector based on [Blitzortung](http://blitzortung.org) data.
 
-_Work in progress._
+Receive a Pushover notification if a lightning strikes in your area.
+
+If a Mapbox access token is set, the city name will be displayed in the notification message.
 
 ## Installation
 
-Create a virtualenv and source it:
+1. Create a virtualenv and source it:
 
 ```
 virtualent venv -p python3.7
 ```
 
-Install dependencies:
+2. Install dependencies:
 
 ```
 pip install -r requirements
 ```
 
-Run app:
+3. Copy the `config.example.py` as `config.py` and fill in the environment variables.
+
+4. Run the app:
 
 ```
 python app.py
 ```
-
-## DOING
-
-- Define region to listen.
-- Check if strike is inside region.
-- Notify via [Pushover](https://pushover.net/) application.
-
-## TODO
-
-- Reverse geocoding to get striked city name.

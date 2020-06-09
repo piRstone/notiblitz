@@ -17,3 +17,6 @@ APP_TOKEN =
 
 # Time to wait before 2 notifications (minutes)
 NOTIFICATION_DELTA = 5
+
+# Set your Mapbox access token to display the striked city name (default to None)
+MAPBOX_TOKEN = None
