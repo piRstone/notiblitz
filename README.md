@@ -1,5 +1,7 @@
 # notiblitz
 
+v1.0.0
+
 Thunderbolt detector based on [Blitzortung](http://blitzortung.org) data.
 
 Receive a Pushover notification if a lightning strikes in your area.
