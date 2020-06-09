@@ -6,14 +6,43 @@ import time
 import json
 import websocket
 import _thread as thread
+import requests
+from datetime import datetime, timedelta
+from shapely.geometry import shape, Point
+
+from config import REGION, USER_TOKEN, APP_TOKEN, NOTIFICATION_DELTA
 
 AreaBlitz = {"west": -1.58, "east": -1.03, "north": 47.17, "south": 46.84}
 
+zone = shape({ 'type': 'Polygon', 'coordinates': [REGION] })
+last_strike = None
 
 def on_message(ws, message):
+    global last_strike
     data = json.loads(message)
-    print(data['time'])
     print(str(data['lat'])+","+str(data['lon']))
+
+    point = Point(data['lon'], data['lat'])
+
+    if zone.contains(point):
+        print('======== STRIKE ========')
+
+        if last_strike:
+            delta = last_strike + timedelta(minutes=NOTIFICATION_DELTA)
+            now = datetime.now()
+            can_notify = now > delta
+        else:
+            can_notify = True
+
+        if can_notify:
+            last_strike = datetime.now()
+            params = {
+                'user': USER_TOKEN,
+                'token': APP_TOKEN,
+                'title': 'Notiblitz',
+                'message': 'La foudre a frappé dans votre secteur'
+            }
+            r = requests.post('https://api.pushover.net/1/messages.json', data=params)
 
 
 def on_error(ws, error):

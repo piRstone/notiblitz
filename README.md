@@ -24,8 +24,12 @@ Run app:
 python app.py
 ```
 
-## TODO
+## DOING
 
 - Define region to listen.
 - Check if strike is inside region.
 - Notify via [Pushover](https://pushover.net/) application.
+
+## TODO
+
+- Reverse geocoding to get striked city name.
