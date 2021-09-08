@@ -58,13 +58,7 @@ def on_message(ws, message):
                 message = 'La foudre a frappé à {}.'.format(city)
 
             # Prepare and send Pushover notification
-            params = {
-                'user': USER_TOKEN,
-                'token': APP_TOKEN,
-                'title': 'Notiblitz',
-                'message': message
-            }
-            requests.post('https://api.pushover.net/1/messages.json', data=params)
+            send_notification(message)
 
 
 def on_error(ws, error):
@@ -82,9 +76,20 @@ def on_open(ws):
     thread.start_new_thread(run, ())
 
 
+def send_notification(message):
+    params = {
+        'user': USER_TOKEN,
+        'token': APP_TOKEN,
+        'title': 'Notiblitz',
+        'message': message
+    }
+    requests.post('https://api.pushover.net/1/messages.json', data=params)
+
+
 if __name__ == "__main__":
     websocket.enableTrace(True)
-    port = random.randint(8050, 8090)
+    # port = random.randint(8050, 8090)
+    port = 8057
     ws = websocket.WebSocketApp("ws://ws.blitzortung.org:" + str(port),
                                 on_message=on_message,
                                 on_error=on_error,

@@ -10,10 +10,12 @@ If a Mapbox access token is set, the city name will be displayed in the notifica
 
 ## Installation
 
+_Use python 3.5 and later._
+
 1. Create a virtualenv and source it:
 
 ```
-virtualent venv -p python3.7
+python -m venv .venv
 ```
 
 2. Install dependencies:
