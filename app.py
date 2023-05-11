@@ -4,6 +4,8 @@
 import random
 import time
 import json
+import logging
+import argparse
 import websocket
 import _thread as thread
 import requests
@@ -12,18 +14,38 @@ from shapely.geometry import shape, Point
 
 from config import REGION, USER_TOKEN, APP_TOKEN, NOTIFICATION_DELTA, MAPBOX_TOKEN
 
+###
+parser = argparse.ArgumentParser(
+    description="Get notified when a lightning strikes in your area."
+)
+parser.add_argument("-v", "--verbose", help="Display DEBUG logs", action="store_true")
+
+args = parser.parse_args()
+if args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+
+logger = logging.getLogger("notiblitz")
+
+
 AreaBlitz = {"west": -1.58, "east": -1.03, "north": 47.17, "south": 46.84}
 
-area = shape({ 'type': 'Polygon', 'coordinates': [REGION] })
+area = shape({"type": "Polygon", "coordinates": [REGION]})
 last_strike = None
 
+
 def get_city_name(lon, lat):
-    mapbox_api_url = 'https://api.mapbox.com/geocoding/v5/mapbox.places'
-    url = '{}/{},{}.json?types=place&access_token={}'.format(mapbox_api_url, lon, lat, MAPBOX_TOKEN)
+    mapbox_api_url = "https://api.mapbox.com/geocoding/v5/mapbox.places"
+    url = "{}/{},{}.json?types=place&access_token={}".format(
+        mapbox_api_url, lon, lat, MAPBOX_TOKEN
+    )
 
     response = requests.get(url)
     data = response.json()
-    return data['features'][0]['text']
+    return data["features"][0]["text"]
+
 
 def decode(b):
     e = {}
@@ -39,7 +61,7 @@ def decode(b):
         g.append(a)
         c = a[0]
         e[o] = f + c
-        o+=1
+        o += 1
         f = a
 
     return "".join(g)
@@ -48,17 +70,17 @@ def decode(b):
 def on_message(ws, message):
     global last_strike
     data = json.loads(decode(message))
-    lon = data['lon']
-    lat = data['lat']
+    lon = data["lon"]
+    lat = data["lat"]
 
-    print(str(lon)+","+str(lat))
+    logger.debug(str(lon) + "," + str(lat))
 
     # Strike geopoint
     point = Point(lon, lat)
 
     # Check if strike is inside watched area
     if area.contains(point):
-        print('======== STRIKE ========')
+        logger.debug("======== STRIKE ========")
 
         if last_strike:
             delta = last_strike + timedelta(minutes=NOTIFICATION_DELTA)
@@ -71,49 +93,50 @@ def on_message(ws, message):
             last_strike = datetime.now()
 
             # Display city name if Mapbox access token is set
-            message = 'La foudre a frappé dans votre secteur'
+            message = "La foudre a frappé dans votre secteur"
             if MAPBOX_TOKEN:
                 city = get_city_name(lon, lat)
-                message = 'La foudre a frappé à {}.'.format(city)
+                message = "La foudre a frappé à {}.".format(city)
 
             # Prepare and send Pushover notification
             send_notification(message)
 
 
 def on_error(ws, error):
-    print(error)
+    logger.error(error)
 
 
 def on_close(ws):
-    print("### closed ###")
+    logger.warning("### closed ###")
 
 
 def on_open(ws):
     def run(*args):
         time.sleep(1)
         # ws.send(json.dumps(AreaBlitz))
-        ws.send('{"a": 418}') # Get worldwide strikes
+        ws.send('{"a": 418}')  # Get worldwide strikes
+
     thread.start_new_thread(run, ())
 
 
 def send_notification(message):
     params = {
-        'user': USER_TOKEN,
-        'token': APP_TOKEN,
-        'title': 'Notiblitz',
-        'message': message
+        "user": USER_TOKEN,
+        "token": APP_TOKEN,
+        "title": "Notiblitz",
+        "message": message,
     }
-    requests.post('https://api.pushover.net/1/messages.json', data=params)
+    requests.post("https://api.pushover.net/1/messages.json", data=params)
+
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
 
-    hosts = ['ws1', 'ws7', 'ws8']
+    hosts = ["ws1", "ws7", "ws8"]
     host = random.choice(hosts)
     url = f"wss://{host}.blitzortung.org:443"
-    ws = websocket.WebSocketApp(url,
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close)
+    ws = websocket.WebSocketApp(
+        url, on_message=on_message, on_error=on_error, on_close=on_close
+    )
     ws.on_open = on_open
     ws.run_forever()
