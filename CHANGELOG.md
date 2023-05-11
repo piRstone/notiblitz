@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.0] - 2023-05-11
+
+Update hosts and add a decoder for websocket events
+
+
 ## [1.0.0] - 2020-06-09
 
 **First release**
