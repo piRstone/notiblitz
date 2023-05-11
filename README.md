@@ -29,5 +29,7 @@ pip install -r requirements
 4. Run the app:
 
 ```
-python app.py
+python app.py -v
 ```
+
+_Use `-v` option to see `DEBUG` logs._

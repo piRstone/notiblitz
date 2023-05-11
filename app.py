@@ -4,6 +4,8 @@
 import random
 import time
 import json
+import logging
+import argparse
 import websocket
 import _thread as thread
 import requests
@@ -11,6 +13,23 @@ from datetime import datetime, timedelta
 from shapely.geometry import shape, Point
 
 from config import REGION, USER_TOKEN, APP_TOKEN, NOTIFICATION_DELTA, MAPBOX_TOKEN
+
+###
+parser = argparse.ArgumentParser(
+    description=''
+)
+parser.add_argument("-v", "--verbose", help="Display DEBUG logs",
+                    action="store_true")
+
+args = parser.parse_args()
+if args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+
+logger = logging.getLogger('notiblitz')
+
 
 AreaBlitz = {"west": -1.58, "east": -1.03, "north": 47.17, "south": 46.84}
 
@@ -51,14 +70,14 @@ def on_message(ws, message):
     lon = data['lon']
     lat = data['lat']
 
-    print(str(lon)+","+str(lat))
+    logger.debug(str(lon)+","+str(lat))
 
     # Strike geopoint
     point = Point(lon, lat)
 
     # Check if strike is inside watched area
     if area.contains(point):
-        print('======== STRIKE ========')
+        logger.debug('======== STRIKE ========')
 
         if last_strike:
             delta = last_strike + timedelta(minutes=NOTIFICATION_DELTA)
@@ -81,11 +100,11 @@ def on_message(ws, message):
 
 
 def on_error(ws, error):
-    print(error)
+    logger.error(error)
 
 
 def on_close(ws):
-    print("### closed ###")
+    logger.warning("### closed ###")
 
 
 def on_open(ws):

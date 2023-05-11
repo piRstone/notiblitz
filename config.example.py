@@ -8,12 +8,12 @@
 #
 # e.g.: REGION = [[-0.65, 44.84], [-1.01, 43.55], [0.10, 43.28]]
 
-REGION =
+REGION = []
 
 
 # Set here your Pushover credentials
-USER_TOKEN =
-APP_TOKEN =
+USER_TOKEN = ""
+APP_TOKEN = ""
 
 # Time to wait before 2 notifications (minutes)
 NOTIFICATION_DELTA = 5
