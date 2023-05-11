@@ -25,10 +25,29 @@ def get_city_name(lon, lat):
     data = response.json()
     return data['features'][0]['text']
 
+def decode(b):
+    e = {}
+    d = list(b)
+    c = d[0]
+    f = c
+    g = [c]
+    h = 256
+    o = h
+    for b in range(1, len(d)):
+        a = ord(d[b])
+        a = d[b] if h > a else e.get(a, f + c)
+        g.append(a)
+        c = a[0]
+        e[o] = f + c
+        o+=1
+        f = a
+
+    return "".join(g)
+
 
 def on_message(ws, message):
     global last_strike
-    data = json.loads(message)
+    data = json.loads(decode(message))
     lon = data['lon']
     lat = data['lat']
 
@@ -72,7 +91,8 @@ def on_close(ws):
 def on_open(ws):
     def run(*args):
         time.sleep(1)
-        ws.send(json.dumps(AreaBlitz))
+        # ws.send(json.dumps(AreaBlitz))
+        ws.send('{"a": 418}') # Get worldwide strikes
     thread.start_new_thread(run, ())
 
 
@@ -85,12 +105,13 @@ def send_notification(message):
     }
     requests.post('https://api.pushover.net/1/messages.json', data=params)
 
-
 if __name__ == "__main__":
     websocket.enableTrace(True)
-    # port = random.randint(8050, 8090)
-    port = 8057
-    ws = websocket.WebSocketApp("ws://ws.blitzortung.org:" + str(port),
+
+    hosts = ['ws1', 'ws7', 'ws8']
+    host = random.choice(hosts)
+    url = f"wss://{host}.blitzortung.org:443"
+    ws = websocket.WebSocketApp(url,
                                 on_message=on_message,
                                 on_error=on_error,
                                 on_close=on_close)
